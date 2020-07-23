@@ -1,0 +1,6 @@
+T.npy
+Y.npy
+idxY.npy
+.ipynb_checkpoints
+.vscode
+.pymc_1.trace
