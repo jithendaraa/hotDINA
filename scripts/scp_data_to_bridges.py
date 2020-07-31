@@ -1,5 +1,8 @@
 import argparse
 import os
+import sys
+sys.path.append('../')
+from passwords import PASSWORD, PORT_NUM, SERVER, USERNAME
 
 os.chdir('..')
 parser = argparse.ArgumentParser()
@@ -9,15 +12,8 @@ args = parser.parse_args()
 
 villages = args.village_num.split('-')
 
-port_num = 2222
-print("Enter PSC password for scp to jith@bridges.psc.edu")
-psc_password = input()
-
-print("Enter ssh password to jith@bridges.psc.edu -p " + str(port_num) + ". Same as your XSEDE password")
-xsede_password = input()
-
-scp_destination = "jith@bridges.psc.edu:~/"
-ssh_command = "sshpass -p " + xsede_password + " ssh jith@bridges.psc.edu -p " + str(port_num)
+scp_destination = USERNAME + "@" + SERVER + ":~/"
+ssh_command = "sshpass -p " + PASSWORD['XSEDE'] + " ssh jith@bridges.psc.edu -p " + str(PORT_NUM)
 
 scp_commands = []
 
@@ -27,9 +23,9 @@ if len(villages) == 1:
     Y_filename      = "Y_" + village_num + "_" + args.observations + ".npy"
     idxY_filename   = "idxY_" + village_num + "_" + args.observations + ".npy"
     
-    scp_T_command       = "sshpass -p " + psc_password + " scp " + T_filename + " " + scp_destination + T_filename
-    scp_Y_command       = "sshpass -p " + psc_password + " scp " + Y_filename + " " + scp_destination + Y_filename
-    scp_idxY_command    = "sshpass -p " + psc_password + " scp " + idxY_filename + " " + scp_destination + idxY_filename
+    scp_T_command       = "sshpass -p " + PASSWORD['PSC'] + " scp " + T_filename + " " + scp_destination + "T/" + T_filename
+    scp_Y_command       = "sshpass -p " + PASSWORD['PSC'] + " scp " + Y_filename + " " + scp_destination + "Y/" + Y_filename
+    scp_idxY_command    = "sshpass -p " + PASSWORD['PSC'] + " scp " + idxY_filename + " " + scp_destination + "idxY/" + idxY_filename
     
     scp_commands.append(scp_T_command)
     scp_commands.append(scp_idxY_command)
@@ -43,14 +39,23 @@ else:
         Y_filename      = "Y_" + village_num + "_" + args.observations + ".npy"
         idxY_filename   = "idxY_" + village_num + "_" + args.observations + ".npy"
 
-        scp_T_command       = "sshpass -p " + psc_password + " scp " + T_filename + " " + scp_destination + T_filename
-        scp_Y_command       = "sshpass -p " + psc_password + " scp " + Y_filename + " " + scp_destination + Y_filename
-        scp_idxY_command    = "sshpass -p " + psc_password + " scp " + idxY_filename + " " + scp_destination + idxY_filename
+        scp_T_command       = "sshpass -p " + PASSWORD['PSC'] + " scp " + T_filename + " " + scp_destination + "T/" + T_filename
+        scp_Y_command       = "sshpass -p " + PASSWORD['PSC'] + " scp " + Y_filename + " " + scp_destination + "Y/" + Y_filename
+        scp_idxY_command    = "sshpass -p " + PASSWORD['PSC'] + " scp " + idxY_filename + " " + scp_destination + "idxY/" + idxY_filename
 
         scp_commands.append(scp_T_command)
         scp_commands.append(scp_idxY_command)
         scp_commands.append(scp_Y_command)
 
-for command in scp_commands:
+os.chdir('T')
+
+for i in range(len(scp_commands)):
+    command = scp_commands[i]
+    if i%3 == 0:
+        os.chdir('../T')
+    elif i%3 == 1:
+        os.chdir('../idxY')
+    elif i%3 == 2:
+        os.chdir('../Y')
     os.system(command)
     print(command)
