@@ -2,22 +2,39 @@ import numpy as np
 import pystan
 import time
 import pickle
+import argpase
+
+MAXSKILLS = 4
+chains = 4
+K = 22
+warmup = 500
+iters = 500 + warmup
 
 total_start = time.time()
-K = 22
-MAXSKILLS = 4
 
-chains = 4
-warmup = 500
-iters = 2500 + warmup
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--village_num", help="Village number to run hotDINA_pystan for. Should be xxx. Files referred will be T_(-v)_(-o).npy, Y_(-v)_(-o).npy and idxY_(-v)_(-o).npy")
+parser.add_argument("-o", "--observations", help="Num. of observations of village -v that has to be reffered. Files referred will be T_(-v)_(-o).npy, Y_(-v)_(-o).npy and idxY_(-v)_(-o).npy. Should be a number or 'all'")
+parser.add_argument("-w", "--warmup", help="Warmup for the Stan model. Default at 500", type=int)
+parser.add_argument("-i", "--iters", help="Iterations for the Stan model. Iters should be greater than warmup. Default at 1000", type=int)
+args = parser.parse_args()
 
-with open('Y.npy', 'rb') as f:
+village_num = args.village_num
+observations = args.observations
+warmup = args.warmup
+iters = args.iters
+
+Y_filename      = "Y_" + village_num + "_" + observations + ".npy"
+idxY_filename   = "idxY_" + village_num + "_" + observations + ".npy"
+T_filename      = "T_" + village_num + "_" + observations + ".npy"
+
+with open(Y_filename, 'rb') as f:
     obsY = np.load(f).astype(int)
     
-with open('idxY.npy', 'rb') as f:
+with open(idxY_filename, 'rb') as f:
     idxY = np.load(f).astype(int)
     
-with open('T.npy', 'rb') as f:
+with open(T_filename, 'rb') as f:
     T = np.load(f)
 
 I = T.shape[0]
@@ -130,12 +147,14 @@ total_time = compile_time + fitting_time
 print("Total time to compile and sample:", total_time, "s")
 print("Samples:", iters, ", Tune/warmup:", warmup, ", Chains:", chains)
 print("K =", K, ", #students=", I, ", Observations: ", sum(T))
-pickle_file = "model_fit.pkl"
+
+pickle_file = "model_fit_" + village_num + "_" + observations + ".pkl"
+
 with open(pickle_file, "wb") as f:
     pickle.dump({'stan_model' : stan_model, 
                  'pystan_model' : hotDINA,
                  'fit' : hotDINA_fit}, f, protocol=-1)
-print("PYSTAN fitted and model saved as " + pickle_file)
+print("PyStan fitted and model saved as " + pickle_file)
 total_end = time.time()
 print("HotDINA PyStan took ", total_end - total_start, "s")
 

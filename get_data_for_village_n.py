@@ -5,22 +5,22 @@ import numpy as np
 import pandas as pd
 import sys
 import argparse
-os.chdir("D:\\RoboTutor-Analysis")
-sys.path.append("D:\\RoboTutor-Analysis")
+sys.path.append("../RoboTutor-Analysis")
+os.chdir("../RoboTutor-Analysis")
 from helper import read_cta_table, get_spaceless_kc_list, read_data, get_kc_list_from_cta_table
 
 NUM_ENTRIES = "all"
 village_num = None
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--n_entries", help="NUM_ENTRIES that have to be extracted from a given transactions table. Should be a number or 'all'. If inputted number > total records for the village, this will assume a value of 'all'")
+parser.add_argument("-o", "--observations", help="NUM_ENTRIES that have to be extracted from a given transactions table. Should be a number or 'all'. If inputted number > total records for the village, this will assume a value of 'all'")
 parser.add_argument("-v", "--village_num", help="village_num whose transactions data has to be extracted, should be between 114 and 141")
 args = parser.parse_args()
 
 village_num = args.village_num
 
-if args.n_entries != "all":
-    NUM_ENTRIES = int(args.n_entries)
+if args.observations != "all":
+    NUM_ENTRIES = int(args.observations)
 else:
     NUM_ENTRIES = "all"
 
