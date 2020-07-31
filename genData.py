@@ -4,13 +4,25 @@ import os
 import numpy as np
 import pandas as pd
 import sys
+import argparse
 os.chdir("D:\\RoboTutor-Analysis")
 sys.path.append("D:\\RoboTutor-Analysis")
 from helper import read_cta_table, get_spaceless_kc_list, read_data, get_kc_list_from_cta_table
 
 NUM_ENTRIES = "all"
-NUM_CHAINS = 5
-village_num = "130"
+village_num = None
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-n", "--n_entries", help="NUM_ENTRIES that have to be extracted from a given transactions table. Should be a number or 'all'. If inputted number > total records for the village, this will assume a value of 'all'")
+parser.add_argument("-v", "--village_num", help="village_num whose transactions data has to be extracted, should be between 114 and 141")
+args = parser.parse_args()
+
+village_num = args.village_num
+
+if args.n_entries != "all":
+    NUM_ENTRIES = int(args.n_entries)
+else:
+    NUM_ENTRIES = "all"
 
 full_df = None
 if NUM_ENTRIES == "all":
@@ -97,13 +109,9 @@ Q_matrix = np.zeros((J, K), dtype=int)
 for j in range(J):
     item_num = uniq_tutors_in_village[j]
 
-filename = 'RT_114_data.txt';
-
 train_data = np.concatenate((np.array(users).reshape(num_entries, 1), np.array(items).reshape(num_entries, 1), np.array(corrects).reshape(num_entries, 1)), axis=1)
-
 train_df = pd.DataFrame(data=train_data, columns=['user', 'item', 'correct'])
 os.chdir('../hotDINA')
-train_df.to_csv(filename, sep='\t', index=None)
 
 for tutor in uniq_tutors_in_village:
     item_num = uniq_tutors_in_village.index(tutor)
@@ -114,77 +122,12 @@ for tutor in uniq_tutors_in_village:
         skill_num = kc_list.index(skill)
         Q_matrix[item_num][skill_num] = int(1.0)
         
-pd.DataFrame(data=Q_matrix).to_csv('qmatrix.txt', index=None, header=None)
-
-
-for chain in range(NUM_CHAINS):
-    theta = np.random.normal(loc=0.0, scale=1.0, size=NUM_USERS)
-    lambda0 = np.random.normal(loc=0.0, scale=1.0, size=K)
-    lambda1 = np.random.uniform(low=0.0, high=2.5, size=K)
-    g = np.random.uniform(low=0.0, high=0.5, size=K)
-    ss = np.random.uniform(low=0.6, high=1.0, size=K)
-
-    theta_text = ""
-    for x in theta:
-        if theta_text != "":
-            theta_text += "," + str(x)
-        else:
-            theta_text = "theta = c(" + str(x)
-
-    theta_text += ")"
-
-    lambda0_text = ""
-    for x in lambda0:
-        if lambda0_text != "":
-            lambda0_text += "," + str(x)
-        else:
-            lambda0_text = "lambda0 = c(" + str(x)
-
-    lambda0_text += ")"
-    lambda1_text = ""
-    for x in lambda1:
-        if lambda1_text != "":
-            lambda1_text += "," + str(x)
-        else:
-            lambda1_text = "lambda1 = c(" + str(x)
-    lambda1_text += ")"
-
-    g_text = ""
-    for x in g:
-        if g_text != "":
-            g_text += "," + str(x)
-        else:
-            g_text = "g = c(" + str(x)
-
-    g_text += ")"
-
-    ss_text = ""
-    for x in ss:
-        if ss_text != "":
-            ss_text += "," + str(x)
-        else:
-            ss_text = "ss = c(" + str(x)
-
-    ss_text += ")"
-
-    hidden_param_inits = "list(" + theta_text + "," + lambda0_text + "," + lambda1_text + "," + g_text + "," + ss_text + ")"                  
+# pd.DataFrame(data=Q_matrix).to_csv('qmatrix.txt', index=None, header=None)
 
 T = []
 for user in range(0, NUM_USERS):
     opportunities = users.count(user)
     T.append(opportunities)
-
-T_text = "c("
-for t in T:
-    T_text += str(t) + ","
-T_text = T_text[:-1] + ")"
-
-Q_text = "structure(.Data=c("
-for row in Q_matrix:
-    for q in row:
-        Q_text += str(q) + ","
-
-Q_text = Q_text[:-1] + "),.Dim = c(" + str(J) + "," + str(K) + "))"
 
 idxY = 23 * np.ones((NUM_USERS, max(T), 4))
 t = 0
@@ -212,15 +155,6 @@ for i in range(len(users)):
             
 print("DONE")
 
-idxY_text = "structure(.Data=c("
-for i in range(NUM_USERS):
-    for j in range(max(T)):
-        for k in range(4):
-            idxY_text += str(idxY[i][j][k]) + "," 
-idxY_text = idxY_text[:-1] + "),.Dim=c("
-idxY_text += str(NUM_USERS) + "," + str(max(T)) + "," + str(4) + "))"
-
-Y_text = "structure(.Data = c("
 t = 0
 Y = -1 * np.ones((NUM_USERS, max(T), 4))
 
@@ -237,24 +171,12 @@ for i in range(len(users)):
         if int(idxY[user][t][j]) == 23:
             continue
         Y[user][t][j] = correct
-        
-for i in range(NUM_USERS):
-    for j in range(max(T)):
-        for k in range(4):
-            Y_text += str(Y[i][j][k]) + "," 
-Y_text = Y_text[:-1] + "),.Dim=c("
-Y_text += str(NUM_USERS) + "," + str(max(T)) + "," + str(4) + "))"
 
-with open('idxY.npy', 'wb') as f:
+with open('idxY_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, idxY)
-with open('Y.npy', 'wb') as f:
+with open('Y_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, Y)
-with open('T.npy', 'wb') as f:
+with open('T_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, np.array(T))
 
-# hotdina_data = "list(I=" + str(I) + ", J=" + str(J) + ", K=" + str(K) + ", MAXSKILLS = 4" + ", T=" + T_text + ", Q=" + Q_text + ", idxY=" + idxY_text + ", Y=" + Y_text + ")"
-# hotdina_data_file = open('RT_114_hotdina_data_file.txt', "w")
-# hotdina_data_file.write(hotdina_data)
-# hotdina_data_file.close()
-# print("OpenBUGS data file generated...")
 

@@ -1,19 +1,25 @@
 import numpy as np
 import pymc3 as pm
 import matplotlib.pyplot as plt  
-import arviz as az
 from tqdm import tqdm
 import time
 import pandas as pd
 import openpyxl
+import sys
+sys.setrecursionlimit(100000)
+
+total_start = time.time()
+print("program starts")
 
 batch_size = 1024
 obsY = None
 idxY = None
 T = None
-K = 22
-
+K = 5
 MAXSKILLS = 4
+sample_num = 2500
+chains = 4
+tune = 500
 
 with open('Y.npy', 'rb') as f:
     obsY = np.load(f).astype(int)
@@ -51,8 +57,6 @@ for i in range(I):
         for t in range(T[i]):
             observed_data[i][skill_num][t] = []
 
-MAXSKILLS = 4
-
 for user_num in range(I):
     
     for t in range(T[user_num]):
@@ -63,7 +67,7 @@ for user_num in range(I):
             obs = int(user_obsY[l])
             skill_num = int(user_idxY[l] - 1)
             
-            if skill_num >= 22:
+            if skill_num >= K:
                 continue
             
             observed_data[user_num][skill_num][t].append(obs)
@@ -82,9 +86,11 @@ for user_num in range(I):
 
 trace = None
 summary = None
+print("model building...")
 
+model_build_start = time.time()
 with pm.Model() as hotDINA:    
-    # Priors: bk, ak, learn_k, ones, ss_k, g_k
+    # Priors: theta, bk, ak, learn_k, ones, ss_k, g_k
     theta   = pm.Normal('theta', mu=0.0, sd=1.0, shape=(I, 1))
     lambda0 = pm.Normal('lambda0', mu=0.0, sd=1.0, shape=(K, 1))    #bk
     lambda1 = pm.Uniform('lambda1', 0.0, 2.5, shape=(K, 1))    #ak
@@ -93,6 +99,8 @@ with pm.Model() as hotDINA:
     ss      = pm.Uniform('ss', 0.5, 1.0, shape=(K, 1))
     g       = pm.Uniform('g', 0, 0.5, shape=(K, 1))
     for i in range(I):
+        # print("STUDENT", i+1, " out of", I)
+        
         # t = 0
         for k in range(K):
             prob[i][0][k] = pm.math.invlogit((1.7) * lambda1[k,0] * (theta[i,0] - lambda0[k,0]))
@@ -113,20 +121,33 @@ with pm.Model() as hotDINA:
                 idx = int(idxY[i][t][s] - 1)
                 if idx >= K: continue
                 py[i][t][idx] = pow(ss[idx,0], alpha[i][t][idx]) * pow(g[idx,0], (1-alpha[i][t][idx]))
-    
+            
         for t in tqdm(range(T[i])):
             for s in range(MAXSKILLS):
                 idx = int(idxY[i][t][s] - 1)
                 if idx >= K: continue
                 obsData = pm.Minibatch(observed_data[i][idx][t], batch_size=batch_size)
-                Y[i][t][idx] = pm.Bernoulli(f'y_{i}_{t}_{idx}', p=py[i][t][idx], observed=obsData)
+                y_name = "y_" + str(i) + "_" + str(t) + "_" + str(idx) 
+                Y[i][t][idx] = pm.Bernoulli(y_name, p=py[i][t][idx], observed=obsData)
 
-    print("DONE")
-    start = time.time()
-    trace = pm.sample(1000, tune=500)
-    end = time.time()
-    print("TIME: ", end - start)
-    pm.save_trace(trace=trace, directory=".pymc_1.trace", overwrite=True)
-    print("SAVED")
+    model_build_end = time.time()
+    model_build_time = model_build_end - model_build_start
+    sampling_start = time.time()
+    trace = pm.sample(sample_num, tune=tune, chains=chains)
+    sampling_end = time.time()
+    sampling_time = sampling_end - sampling_start
+    print("Probabilistic graph build took", model_build_time, "s")
+    print("Sampling took", sampling_time, "s")
+    print("Samples:", sample_num, ", Tune/warmup:", tune, ", Chains:", chains)
+    print("K =", K, ", #students=", I, ", Observations: ", sum(T))
+    total_time = model_build_time + sampling_time
+    print("Total time = Building graph + sampling =", total_time, "s")
+    trace_name = ".pymc_1.trace"
+    pm.save_trace(trace=trace, directory=trace_name, overwrite=True)
+    print("Pymc3 Model saved as", trace_name)
     summary_df = pm.stats.summary(trace)
-    summary_df.to_excel("summary.xlsx")
+    summary_file = "summary.xlsx"
+    summary_df.to_excel(summary_file)
+    total_end = time.time()
+    print("Pymc3 model summar stats saved in", summary_file)
+    print("HotDINA Pymc3 took ", total_end - total_start, "s")
