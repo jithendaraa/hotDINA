@@ -1,6 +1,7 @@
-T.npy
-Y.npy
-idxY.npy
+/T
+/Y
+/idxY
 .ipynb_checkpoints
 .vscode
 .pymc_1.trace
+passwords.py

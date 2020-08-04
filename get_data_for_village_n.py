@@ -45,6 +45,9 @@ kc_list_spaceless = get_spaceless_kc_list(kc_list)
 kc_list, num_skills, kc_to_tutorID_dict, tutorID_to_kc_dict, cta_tutor_ids, uniq_skill_groups, skill_group_to_activity_map = read_data()
 cta_tutor_ids = cta_tutor_ids.tolist()
 
+for i in range(len(cta_tutor_ids)):
+    cta_tutor_ids[i] = cta_tutor_ids[i].replace(":", "_")
+
 tutor_names = full_df['Level (Tutor Name)'].tolist()
 tutors = full_df['Level (Tutor)'].tolist()
 problem_names = full_df['Problem Name'].tolist()
@@ -76,7 +79,7 @@ items = []
 num_entries = len(tutors)
 for i in range(len(tutors)):
     tutor = tutors[i]
-    item = uniq_tutors_in_village.index(tutor)
+    item = cta_tutor_ids.index(tutor)
     items.append(item)
     
     student_id = student_ids[i]
@@ -90,39 +93,33 @@ for tutor in uniq_tutors_in_village:
     for kc in KCs:
         if kc not in uniq_kc_in_village:
             uniq_kc_in_village.append(kc)
-len(uniq_kc_in_village)
 
 I = len(uniq_student_ids_in_village)
-NUM_ITEMS = len(uniq_tutors_in_village)
 NUM_SKILLS = len(kc_list) + 1
 NUM_USERS = len(uniq_student_ids_in_village)
 
-J = NUM_ITEMS
+J = len(cta_tutor_ids)
 K = NUM_SKILLS 
 
 print("NUM USERS (I): ", I)
 print("NUM ITEMS (J): ", J)
 print("NUM SKILLS (K):", K)
 
-Q_matrix = np.zeros((J, K), dtype=int)
-
-for j in range(J):
-    item_num = uniq_tutors_in_village[j]
+Q_matrix = np.zeros((J, K-1), dtype=int)
 
 train_data = np.concatenate((np.array(users).reshape(num_entries, 1), np.array(items).reshape(num_entries, 1), np.array(corrects).reshape(num_entries, 1)), axis=1)
-train_df = pd.DataFrame(data=train_data, columns=['user', 'item', 'correct'])
-os.chdir('../hotDINA')
 
-for tutor in uniq_tutors_in_village:
-    item_num = uniq_tutors_in_village.index(tutor)
+os.chdir('../hotDINA')                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+
+for tutor in cta_tutor_ids:
+    item_num = cta_tutor_ids.index(tutor)
     related_skills = tutorID_to_kc_dict[tutor]
-    related_skill_nums = []
     
     for skill in related_skills:
         skill_num = kc_list.index(skill)
         Q_matrix[item_num][skill_num] = int(1.0)
         
-# pd.DataFrame(data=Q_matrix).to_csv('qmatrix.txt', index=None, header=None)
+pd.DataFrame(data=Q_matrix).to_csv('qmatrix.txt', index=None, header=None)
 
 T = []
 for user in range(0, NUM_USERS):
@@ -142,7 +139,7 @@ for i in range(len(users)):
         continue
     
     correct = corrects[i]
-    for j in range(NUM_SKILLS):
+    for j in range(NUM_SKILLS-1):
         if Q_matrix[item][j] == 1:
             if idxY[user][t][0] == 23:
                 idxY[user][t][0] = j + 1
@@ -152,7 +149,8 @@ for i in range(len(users)):
                 idxY[user][t][2] = j + 1
             elif idxY[user][t][3] == 23:
                 idxY[user][t][3] = j + 1
-            
+
+print        
 print("DONE")
 
 t = 0
@@ -172,11 +170,21 @@ for i in range(len(users)):
             continue
         Y[user][t][j] = correct
 
-with open('idxY_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
+with open('idxY/idxY_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, idxY)
-with open('Y_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
+with open('Y/Y_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, Y)
-with open('T_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
+with open('T/T_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, np.array(T))
+with open('items/items_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
+    items_2d = -1 * np.ones((I, max(T))).astype(int)
+    idx = 0
+
+    for i in range(I):
+        for t in range(T[i]):
+            items_2d[i][t] = items[idx]
+            idx += 1
+
+    np.save(f, np.array(items_2d))
 
 
