@@ -28,7 +28,7 @@ if args.iters != None:
 
 Y_filename      = "Y/Y_" + village_num + "_" + observations + ".npy"
 T_filename      = "T/T_" + village_num + "_" + observations + ".npy"
-items_filename  = "items/items_" + village_num + "_" + observations + ".npy"
+items_filename  = "items/items_" + village_num + "_all.npy"
 
 with open(Y_filename, 'rb') as f:
     obsY = np.load(f).astype(int)

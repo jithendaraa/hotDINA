@@ -5,3 +5,5 @@
 .vscode
 .pymc_1.trace
 passwords.py
+/items
+*Untitled.ipynb

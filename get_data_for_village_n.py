@@ -185,6 +185,6 @@ with open('items/items_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') a
             items_2d[i][t] = items[idx]
             idx += 1
 
-    np.save(f, np.array(items_2d))
+    np.save(f, np.array(items))
 
 
