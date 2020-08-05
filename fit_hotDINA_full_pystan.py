@@ -30,12 +30,6 @@ Y_filename      = "Y/Y_" + village_num + "_" + observations + ".npy"
 T_filename      = "T/T_" + village_num + "_" + observations + ".npy"
 items_filename  = "items/items_" + village_num + "_all.npy"
 
-with open(Y_filename, 'rb') as f:
-    obsY = np.load(f).astype(int)
-with open(items_filename, 'rb') as f:
-    items = np.load(f)
-    if observations != "all":
-        items = items[:int(observations)]
 with open(T_filename, 'rb') as f:
     T = np.load(f)
 
@@ -43,6 +37,32 @@ q = pd.read_csv('qmatrix.txt', header=None).to_numpy()[:J]
 I = T.shape[0]
 T = np.array(T.tolist())
 max_T = max(T)
+items_2d = -1 * np.ones((I, max(T))).astype(int)
+
+with open(items_filename, 'rb') as f:
+    items = np.load(f)
+    idx = 0
+    for i in range(I):
+        for t in range(T[i]):
+            items_2d[i][t] = items[idx]
+            if items[idx] >= J:
+                items_2d[i][t] = J-1
+            idx += 1
+
+with open(Y_filename, 'rb') as f:
+    y = np.load(f).astype(int)
+    obsY = -1 * np.ones((I, max_T)).astype(int)
+
+    for i in range(I):
+        for t in range(max_T):
+            obsY[i][t] = y[i][t][0]
+            
+    y = -1 * np.ones((I, max_T, J)).astype(int)
+    for i in range(I):
+        for t in range(T[i]):
+            j = items_2d[i][t]
+            y[i][t][j] = obsY[i][t]
+
 
 num_observations = sum(T)
 stan_model = """
@@ -72,14 +92,29 @@ model {
     real value[I,K];
     real V[I];
     real L[J, max_T];
+    int j;
     
     for (i in 1:I) {
         V[i] = 1.0;
     }
     
-    for (j in 1:J) {
-        for (t in 1:max_T) {
-            L[j,t] = 1.0;
+    for (i in 1:I) {
+        for (t in 1:T[i]) {
+            j = items[i,t];
+            if (j >= 0 && j < J && y[i,t,j] != -1) {
+                L[j,t] = 1.0;
+            }
+        }
+    }
+    
+    for (i in 1:I) {
+        for (t in 1:T[i]) {
+            j = items[i,t];
+            if (j >= 0 && j < J && y[i,t,j] != -1) {
+                for (k in 1:K) {
+                    L[j,t] = L[j,t] * pow(pow(1 - learn[k], t), Q[j,k]);
+                }
+            }
         }
     }
     
@@ -93,41 +128,43 @@ model {
     for (i in 1:I){
         for (k in 1:K){
             value[i,k] = inv_logit(1.7 * lambda1[k] * (theta[i] - lambda0[k]) );
-         }
-         for (j in 1:J) {
-             for (k in 1:K) {
+        }
+        j = items[i,1];
+        if (j >= 0 && j < J && y[i,1,j] != -1) {
+            for (k in 1:K) {
                  V[i] = V[i] * pow(value[i,k], Q[j,k]);
-                 
-             }
-         }
-     } 
+            }
+        }
+        
+    }
+    
+    for (i in 1:I) {
+        for (t in 1:T[i]) {
+            j = items[i,t];
+            if (j >= 0 && j < J && y[i,t,j] != -1) {
+                bern_G[i,t,j] = pow(g[j], y[i, t, j]) * pow(1-g[j], 1-y[i,t,j]);
+                bern_S[i,t,j] = pow(ss[j], y[i, t, j]) * pow(1-ss[j], 1-y[i,t,j]);
+            }
+        }
+    }
      
-     for (i in 1:I) {
-         for (t in 1:max_T) {
-             for (j in 1:J) {
-                 bern_G[i,t,j] = pow(g[j], y[i, t, j]) * pow(1-g[j], 1-y[i,t,j]);
-                 bern_S[i,t,j] = pow(ss[j], y[i, t, j]) * pow(1-ss[j], 1-y[i,t,j]);
-             }
-         }
-     }
+    for (i in 1:I) {
+        j = items[i,1];
+        if (j >= 0 && j < J && y[i,1,j] != -1) {
+            lp[i,1,j] = bern_G[i,1,j] + (V[i] * (bern_S[i,1,j] - bern_G[i,1,j]));
+            target += log(lp[i,1,j]);
+        }
+    }
      
-     
-     for (i in 1:I) {
-         for (j in 1:J) {
-             lp[i,1,j] = bern_G[i,1,j] + (V[i] * (bern_S[i,1,j] - bern_G[i,1,j]));
-             target += log(lp[i,1,j]);
-         }
-     }
-     
-     for (i in 1:I) {
-         for (j in 1:J) {
-             for (t in 2:T[i]) {
-                 lp[i,t,j] = (L[j,t] * (bern_G[i, t, j] - bern_S[i,t,j]) * (1-V[i])) + bern_S[i,t,j];
-                 target += lp[i,t,j];
-             }
-         }
-     }
-     
+    for (i in 1:I) {
+        for (t in 2:T[i]) {
+            j = items[i,t];
+            if (j >= 0 && j < J && y[i,t,j] != -1) {
+                lp[i,t,j] = (L[j,t] * (bern_G[i, t, j] - bern_S[i,t,j]) * (1-V[i])) + bern_S[i,t,j];
+                target += lp[i,t,j];
+            }
+        }
+    }
 }
 generated quantities {}
 """
@@ -144,8 +181,8 @@ hotDINA_fit = hotDINA.sampling(data={'I': I,
                                      'max_T': max_T,
                                      'T': T,
                                      'Q': q,
-                                     'items': items,
-                                     'y': np.ones((I, max_T, J)).astype(int)
+                                     'items': items_2d,
+                                     'y': y
                                      },
                                iter=iters,
                                chains=chains, 
@@ -169,3 +206,4 @@ print("PyStan fitted and model saved as " + pickle_file)
 total_end = time.time()
 print("HotDINA PyStan took ", total_end - total_start, "s")
 print(hotDINA_fit)
+

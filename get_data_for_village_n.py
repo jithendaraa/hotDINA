@@ -177,14 +177,4 @@ with open('Y/Y_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
 with open('T/T_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
     np.save(f, np.array(T))
 with open('items/items_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
-    items_2d = -1 * np.ones((I, max(T))).astype(int)
-    idx = 0
-
-    for i in range(I):
-        for t in range(T[i]):
-            items_2d[i][t] = items[idx]
-            idx += 1
-
     np.save(f, np.array(items))
-
-
