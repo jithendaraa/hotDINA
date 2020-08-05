@@ -1,11 +1,12 @@
 import numpy as np
+import pandas as pd
 import pystan
 import time
 import pickle
-import argpase
+import argparse
 
 chains = 4
-J = 1712
+J = 10
 K = 22
 warmup = 100
 iters = 100 + warmup
@@ -20,8 +21,10 @@ args = parser.parse_args()
 
 village_num = args.village_num
 observations = args.observations
-warmup = args.warmup
-iters = args.iters
+if args.warmup != None:
+    warmup = args.warmup
+if args.iters != None:
+    iters = args.iters
 
 Y_filename      = "Y/Y_" + village_num + "_" + observations + ".npy"
 T_filename      = "T/T_" + village_num + "_" + observations + ".npy"
@@ -31,6 +34,8 @@ with open(Y_filename, 'rb') as f:
     obsY = np.load(f).astype(int)
 with open(items_filename, 'rb') as f:
     items = np.load(f)
+    if observations != "all":
+        items = items[:int(observations)]
 with open(T_filename, 'rb') as f:
     T = np.load(f)
 
@@ -154,7 +159,7 @@ print("Total time to compile and sample:", total_time, "s")
 print("Samples:", iters, ", Tune/warmup:", warmup, ", Chains:", chains)
 print("K =", K, ", #students=", I, ", Observations: ", sum(T))
 
-pickle_file = "full_model_fit_" + village_num + "_" + observations + ".pkl"
+pickle_file = "pickles/full_model_fit_" + village_num + "_" + observations + ".pkl"
 
 with open(pickle_file, "wb") as f:
     pickle.dump({'stan_model' : stan_model, 
