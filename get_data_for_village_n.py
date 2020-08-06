@@ -8,6 +8,7 @@ import argparse
 sys.path.append("../RoboTutor-Analysis")
 os.chdir("../RoboTutor-Analysis")
 from helper import read_cta_table, get_spaceless_kc_list, read_data, get_kc_list_from_cta_table
+import pickle
 
 NUM_ENTRIES = "all"
 village_num = None
@@ -170,11 +171,19 @@ for i in range(len(users)):
             continue
         Y[user][t][j] = correct
 
-with open('idxY/idxY_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
-    np.save(f, idxY)
-with open('Y/Y_' + village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
-    np.save(f, Y)
-with open('T/T_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
-    np.save(f, np.array(T))
-with open('items/items_' +village_num + '_' + str(NUM_ENTRIES) + '.npy', 'wb') as f:
-    np.save(f, np.array(items))
+y = []
+for i in range(I):
+    for t in range(T[i]):
+        y.append(Y[i][t][0])
+
+data_dict = {
+    'T': T,
+    'obsY': Y,
+    'idxY': idxY,
+    'items': items,
+    'users': users,
+    'y': y
+}
+
+with open('pickles/data/data'+ village_num + '_' + str(NUM_ENTRIES) +'.pickle', 'wb') as handle:
+    pickle.dump(data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)

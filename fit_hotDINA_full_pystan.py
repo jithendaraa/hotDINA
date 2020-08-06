@@ -6,7 +6,7 @@ import pickle
 import argparse
 
 chains = 4
-J = 10
+J = 20
 K = 22
 warmup = 100
 iters = 100 + warmup
@@ -26,45 +26,29 @@ if args.warmup != None:
 if args.iters != None:
     iters = args.iters
 
-Y_filename      = "Y/Y_" + village_num + "_" + observations + ".npy"
-T_filename      = "T/T_" + village_num + "_" + observations + ".npy"
-items_filename  = "items/items_" + village_num + "_all.npy"
+data_filename = 'pickles/data/data' + village_num + "_" + observations + '.pickle'
 
-with open(T_filename, 'rb') as f:
-    T = np.load(f)
+with open(data_filename, 'rb') as f:
+    data_dict = pickle.load(f)
 
 q = pd.read_csv('qmatrix.txt', header=None).to_numpy()[:J]
-I = T.shape[0]
-T = np.array(T.tolist())
+T = data_dict['T']
+I = len(T)
 max_T = max(T)
 items_2d = -1 * np.ones((I, max(T))).astype(int)
 
-with open(items_filename, 'rb') as f:
-    items = np.load(f)
-    idx = 0
-    for i in range(I):
-        for t in range(T[i]):
-            items_2d[i][t] = items[idx]
-            if items[idx] >= J:
-                items_2d[i][t] = J-1
-            idx += 1
+items = data_dict['items']
+idx = 0
+for i in range(I):
+    for t in range(T[i]):
+        items_2d[i][t] = items[idx] + 1
+        if items[idx] + 1 > J:
+            items_2d[i][t] = J
+        idx += 1
 
-with open(Y_filename, 'rb') as f:
-    y = np.load(f).astype(int)
-    obsY = -1 * np.ones((I, max_T)).astype(int)
-
-    for i in range(I):
-        for t in range(max_T):
-            obsY[i][t] = y[i][t][0]
-            
-    y = -1 * np.ones((I, max_T, J)).astype(int)
-    for i in range(I):
-        for t in range(T[i]):
-            j = items_2d[i][t]
-            y[i][t][j] = obsY[i][t]
-
-
+y = data_dict['y']
 num_observations = sum(T)
+
 stan_model = """
 data {
     int I;                          // Num. students
@@ -196,12 +180,12 @@ print("Total time to compile and sample:", total_time, "s")
 print("Samples:", iters, ", Tune/warmup:", warmup, ", Chains:", chains)
 print("K =", K, ", #students=", I, ", Observations: ", sum(T))
 
-pickle_file = "pickles/full_model_fit_" + village_num + "_" + observations + ".pkl"
+pickle_file = "pickles/full_model_fit_" + village_num + "_" + observations + ".pickle"
 
 with open(pickle_file, "wb") as f:
     pickle.dump({'stan_model' : stan_model, 
                  'pystan_model' : hotDINA,
-                 'fit' : hotDINA_fit}, f, protocol=-1)
+                 'fit' : hotDINA_fit}, f, protocol=pickle.DEFAULT_PROTOCOL)
 print("PyStan fitted and model saved as " + pickle_file)
 total_end = time.time()
 print("HotDINA PyStan took ", total_end - total_start, "s")
