@@ -7,8 +7,10 @@ import sys
 import argparse
 sys.path.append("../RoboTutor-Analysis")
 os.chdir("../RoboTutor-Analysis")
-from helper import read_cta_table, get_spaceless_kc_list, read_data, get_kc_list_from_cta_table
 import pickle
+
+from helper import *
+from reader import *
 
 NUM_ENTRIES = "all"
 village_num = None
@@ -26,23 +28,17 @@ else:
     NUM_ENTRIES = "all"
 
 full_df = None
+path_to_transac_table = "Data/village_"+ village_num + "/village_" + village_num + "_KCSubtests.txt"
+
 if NUM_ENTRIES == "all":
-    full_df = pd.read_csv("Data/village_"+village_num+"/village_" + village_num + "_KCSubtests.txt", delimiter='\t')
+    full_df = read_transac_table(path_to_transac_table)
 else:
-    full_df = pd.read_csv("Data/village_"+village_num+"/village_" + village_num + "_KCSubtests.txt", delimiter='\t')[:NUM_ENTRIES]
+    full_df = read_transac_table(path_to_transac_table)[:NUM_ENTRIES]
 
-reqd_cols = ['Anon Student Id', 'Level (Tutor Name)', 'Level (Tutor)', 'Problem Name', 'Outcome', 'KC(Subtest)', 'KC(Subtest)_1', 'KC(Subtest)_2', "KC(Subtest)_3"]
-all_cols = full_df.columns.tolist()
-remove_cols = []
 
-for col in all_cols:
-    if col not in reqd_cols:
-        remove_cols.append(col)
-        
-full_df = full_df.drop(columns=remove_cols)
 cta_df = read_cta_table("Data/CTA.xlsx")
 kc_list = cta_df.columns.tolist()
-kc_list_spaceless = get_spaceless_kc_list(kc_list)
+kc_list_spaceless = remove_spaces(kc_list)
 kc_list, num_skills, kc_to_tutorID_dict, tutorID_to_kc_dict, cta_tutor_ids, uniq_skill_groups, skill_group_to_activity_map = read_data()
 cta_tutor_ids = cta_tutor_ids.tolist()
 
@@ -50,12 +46,13 @@ for i in range(len(cta_tutor_ids)):
     cta_tutor_ids[i] = cta_tutor_ids[i].replace(":", "_")
 
 tutor_names = full_df['Level (Tutor Name)'].tolist()
-tutors = full_df['Level (Tutor)'].tolist()
+tutors = remove_iter_suffix(full_df['Level (Tutor)'].tolist())
 problem_names = full_df['Problem Name'].tolist()
 student_ids = full_df['Anon Student Id'].tolist()
+corrects = full_df["Outcome"].tolist()
+
 for i in range(len(student_ids)):
     student_ids[i] = str(student_ids[i])
-corrects = full_df["Outcome"].tolist()
 
 for i in range(len(corrects)):
     val = corrects[i]
@@ -63,12 +60,6 @@ for i in range(len(corrects)):
         corrects[i] = 1
     else: 
         corrects[i] = 0
-
-for i in range(len(tutors)):
-    tutor = tutors[i]
-    idx = tutor.find("__it_")
-    if idx != -1:
-        tutors[i] = tutor[:idx]
 
 uniq_student_ids_in_village = pd.unique(np.array(student_ids)).tolist()
 uniq_tutors_in_village = pd.unique(np.array(tutors)).tolist()
@@ -86,21 +77,10 @@ for i in range(len(tutors)):
     student_id = student_ids[i]
     user = uniq_student_ids_in_village.index(student_id)
     users.append(user)
-    
-uniq_kc_in_village = []
-
-for tutor in uniq_tutors_in_village:
-    KCs = tutorID_to_kc_dict[tutor]
-    for kc in KCs:
-        if kc not in uniq_kc_in_village:
-            uniq_kc_in_village.append(kc)
 
 I = len(uniq_student_ids_in_village)
-NUM_SKILLS = len(kc_list) + 1
-NUM_USERS = len(uniq_student_ids_in_village)
-
 J = len(cta_tutor_ids)
-K = NUM_SKILLS 
+K = len(kc_list) + 1 
 
 print("NUM USERS (I): ", I)
 print("NUM ITEMS (J): ", J)
@@ -108,27 +88,16 @@ print("NUM SKILLS (K):", K)
 
 Q_matrix = np.zeros((J, K-1), dtype=int)
 
-train_data = np.concatenate((np.array(users).reshape(num_entries, 1), np.array(items).reshape(num_entries, 1), np.array(corrects).reshape(num_entries, 1)), axis=1)
-
 os.chdir('../hotDINA')                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 
-for tutor in cta_tutor_ids:
-    item_num = cta_tutor_ids.index(tutor)
-    related_skills = tutorID_to_kc_dict[tutor]
-    
-    for skill in related_skills:
-        skill_num = kc_list.index(skill)
-        Q_matrix[item_num][skill_num] = int(1.0)
-        
-pd.DataFrame(data=Q_matrix).to_csv('qmatrix.txt', index=None, header=None)
-
 T = []
-for user in range(0, NUM_USERS):
+for user in range(0, I):
     opportunities = users.count(user)
     T.append(opportunities)
 
-idxY = 23 * np.ones((NUM_USERS, max(T), 4))
+idxY = K * np.ones((I, max(T), 4))
 t = 0
+Q_matrix = pd.read_csv('qmatrix.txt', header=None).to_numpy()
 
 for i in range(len(users)):
     if i==0 or users[i-1] != users[i]:
@@ -140,7 +109,7 @@ for i in range(len(users)):
         continue
     
     correct = corrects[i]
-    for j in range(NUM_SKILLS-1):
+    for j in range(K-1):
         if Q_matrix[item][j] == 1:
             if idxY[user][t][0] == 23:
                 idxY[user][t][0] = j + 1
@@ -151,11 +120,8 @@ for i in range(len(users)):
             elif idxY[user][t][3] == 23:
                 idxY[user][t][3] = j + 1
 
-print        
-print("DONE")
-
 t = 0
-Y = -1 * np.ones((NUM_USERS, max(T), 4))
+Y = -1 * np.ones((I, max(T), 4))
 
 for i in range(len(users)):
     if i==0 or users[i-1] != users[i]:
@@ -182,8 +148,10 @@ data_dict = {
     'idxY': idxY,
     'items': items,
     'users': users,
-    'y': y
+    'y': np.array(y).astype(int).tolist()
 }
 
 with open('pickles/data/data'+ village_num + '_' + str(NUM_ENTRIES) +'.pickle', 'wb') as handle:
     pickle.dump(data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+print("DONE")

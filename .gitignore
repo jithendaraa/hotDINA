@@ -1,9 +1,7 @@
-/T
-/Y
-/idxY
-/items
+__pycache__
 .ipynb_checkpoints
 .vscode
 .pymc_1.trace
 Untitled.ipynb
 passwords.py
+hotDINA.pdf
