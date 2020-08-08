@@ -2,14 +2,13 @@ import numpy as np
 import pystan
 import time
 import pickle
-import argpase
+import argparse
 
 MAXSKILLS = 4
 chains = 4
 K = 22
 warmup = 500
 iters = 500 + warmup
-
 total_start = time.time()
 
 parser = argparse.ArgumentParser()
@@ -24,32 +23,16 @@ observations = args.observations
 warmup = args.warmup
 iters = args.iters
 
-Y_filename      = "Y/Y_" + village_num + "_" + observations + ".npy"
-idxY_filename   = "idxY/idxY_" + village_num + "_" + observations + ".npy"
-T_filename      = "T/T_" + village_num + "_" + observations + ".npy"
+path_to_data_file = 'pickles/data/data' + village_num + '_' + observations + '.pickle'
 
-with open(Y_filename, 'rb') as f:
-    obsY = np.load(f).astype(int)
-    
-with open(idxY_filename, 'rb') as f:
-    idxY = np.load(f).astype(int)
-    
-with open(T_filename, 'rb') as f:
-    T = np.load(f)
+with open(path_to_data_file, 'rb') as handle:
+    data_dict = pickle.load(handle)
 
+idxY = data_dict['idxY'].astype(int)
+obsY = data_dict['obsY'].astype(int)
+T = np.array(data_dict['T'])
 I = T.shape[0]
-T = np.array(T.tolist())
 max_T = max(T)
-
-obsData = (np.ones((I, max_T, K))).astype(int)
-for i in range(I):
-    for t in range(max_T):
-        for s in range(MAXSKILLS):
-            idx = int(idxY[i][t][s]) - 1
-            if idx >= K:
-                continue
-            obsData[i][t][idx] = 1
-obsData = obsData.astype(int)
 
 num_observations = sum(T)
 stan_model = """
@@ -125,7 +108,7 @@ generated quantities {}
 """
 print("compiling stan model..")
 start = time.time()
-hotDINA = pystan.model.StanModel(model_code=stan_model, model_name="hotDINA")
+hotDINA = pystan.model.StanModel(model_code=stan_model, model_name="hotDINA_skill")
 compile_time = time.time() - start
 print("Stan model took", compile_time, "s to compile")
 fitting_start_time = time.time()
@@ -148,12 +131,12 @@ print("Total time to compile and sample:", total_time, "s")
 print("Samples:", iters, ", Tune/warmup:", warmup, ", Chains:", chains)
 print("K =", K, ", #students=", I, ", Observations: ", sum(T))
 
-pickle_file = "model_fit_" + village_num + "_" + observations + ".pkl"
+pickle_file = "pickles/skill_fit_model/skill_model_fit_" + village_num + "_" + observations + ".pickle"
 
 with open(pickle_file, "wb") as f:
     pickle.dump({'stan_model' : stan_model, 
                  'pystan_model' : hotDINA,
-                 'fit' : hotDINA_fit}, f, protocol=-1)
+                 'fit' : hotDINA_fit}, f, protocol=pickle.DEFAULT_PROTOCOL)
 print("PyStan fitted and model saved as " + pickle_file)
 total_end = time.time()
 print("HotDINA PyStan took ", total_end - total_start, "s")

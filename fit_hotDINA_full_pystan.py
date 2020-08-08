@@ -6,7 +6,7 @@ import pickle
 import argparse
 
 chains = 4
-J = 20
+J = 1712
 K = 22
 warmup = 100
 iters = 100 + warmup
@@ -46,8 +46,15 @@ for i in range(I):
             items_2d[i][t] = J
         idx += 1
 
-y = data_dict['y']
-num_observations = sum(T)
+obsY = data_dict['obsY']
+
+y = -1 * np.ones((I, max_T, J)).astype(int)
+for i in range(I):
+    for t in range(T[i]):
+        j = items_2d[i][t]
+        if j >= J:
+            j = J-1
+        y[i][t][j] = obsY[i][t][0]
 
 stan_model = """
 data {
@@ -69,7 +76,6 @@ parameters {
     vector<lower = 0.5, upper = 1>[J] ss;
 }
 model {
-    
     real lp[I, max_T, J];
     real bern_G[I,max_T,J];
     real bern_S[I,max_T,J];
@@ -178,9 +184,9 @@ print("Fitting took", fitting_time, "s for", sum(T), "observations (" , K , "SKI
 total_time = compile_time + fitting_time
 print("Total time to compile and sample:", total_time, "s")
 print("Samples:", iters, ", Tune/warmup:", warmup, ", Chains:", chains)
-print("K =", K, ", #students=", I, ", Observations: ", sum(T))
+print("J=", J, "K =", K, ", #students=", I, ", Observations: ", observations)
 
-pickle_file = "pickles/full_model_fit_" + village_num + "_" + observations + ".pickle"
+pickle_file = "pickles/full_fit_model/full_model_fit_" + village_num + "_" + observations + ".pickle"
 
 with open(pickle_file, "wb") as f:
     pickle.dump({'stan_model' : stan_model, 
