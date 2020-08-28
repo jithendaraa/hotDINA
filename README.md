@@ -27,7 +27,7 @@ Fitting probabilistic student models like hotDINA_skill and hotDINA_full using P
 4. Look at the screenshot in the 3rd point <a href='https://github.com/jithendaraa/RoboTutor-Analysis#installation-and-setup'>here</a>. This is what your `Data` directory looks like after a successful setup!
 
 
-### Using the scripts: Fitting hotDINA on the server
+### Server related setup (PSC Bridges)
 
 The previous section already discussed about fitting BKT parameters using `hmmscalable`. This section focusses on using the scripts in `/scripts` to extract data from `RoboTutor-Analysis/Data`.
 
@@ -46,5 +46,16 @@ SERVER = "xxxx.edu" (ssh username@xxxx -p PORT_NUM)
 USERNAME = "xxxx" (ssh xxxx@SERVER -p PORT_NUM) 
 ```
 
+## Usage 
+
+### Extracting RT transactions data using scripts
+
+1. `python get_data_for_village_n.py -v 130 -o 1200 `: Extracts transactions data of a single village (130) for the first 1200 attempts. Use `-o all` to get all attempts of a student in a particular village. Output: `pickles/data/data(village_num)_(num_obs).pickle`
+
+2. `cd scripts && python get_data_for_villages.py -v 114-120 -o 1200`: Extracts transactions data for villages 114 to 120 for the first 1200 attempts. Use `-o all` to get all attempts of a student in a particular village. Output: `pickles/data/data(village_num)_(num_obs).pickle`.
+
+### SCP extracted transactions data to bridges.psc.edu
+
+1. Coming Soon!
 
 

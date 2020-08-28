@@ -39,7 +39,7 @@ else:
 cta_df = read_cta_table("Data/CTA.xlsx")
 kc_list = cta_df.columns.tolist()
 kc_list_spaceless = remove_spaces(kc_list)
-kc_list, num_skills, kc_to_tutorID_dict, tutorID_to_kc_dict, cta_tutor_ids, uniq_skill_groups, skill_group_to_activity_map = read_data()
+kc_list, kc_to_tutorID_dict, tutorID_to_kc_dict, cta_tutor_ids, uniq_skill_groups, skill_group_to_activity_map = read_data()
 cta_tutor_ids = cta_tutor_ids.tolist()
 
 for i in range(len(cta_tutor_ids)):
