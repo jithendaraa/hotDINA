@@ -16,8 +16,13 @@ Fitting probabilistic student models like hotDINA_skill and hotDINA_full using P
     - First clone the ```RoboTutor-Analysis``` project <br> ```git clone https://github.com/jithendaraa/RoboTutor-Analysis ``` <br>
     - Then, clone this project <br> ``` git clone https://github.com/jithendaraa/hotDINA ```.
 
-2. Due to large amounts of logged data, the `Data` directory in `RoboTutor-Analysis` contains only the scripts to obtain the fitted BKT params and not the parameters themselves. <br>
+2. Setting up transactions data and retrieving the BKT parameters: <br>
+    Due to large amounts of logged data, the `Data` directory in `RoboTutor-Analysis` contains only the scripts to obtain the fitted BKT params and not the parameters themselves. <br>
     - Follow <a href='https://docs.google.com/document/d/1hcX1fhHzBLH3xweZrkdVJOty9yq4DAxCs_ZjNj1h9-c/edit'> this guide</a> to get village-specific transactions data (and the fitted BKT parameters for these 29 villages). At the end of this process, `RoboTutor-Analysis/Data` must contain 29 folders named `village_n` (n from 114 to 142), 1 hmmscalable folder, a `script.ipynb` and a `script.py`.
+
+3. Setting up activity tables, CTA and other data in `RoboTutor-Analysis/Data` <br>
+    1. Navigate to XPrize Home 2 folder and download the pristine form of the activity_table you need: Save this as `Activity_table_KCSubtest_sl2.xlsx` in the `Data` directory of `RoboTutor-Analysis`. Note: this activity table should have the last 4 columns as KC columns.
+    2. Download `Code Drop 2 Matrices.xlsx` and `CTA.xlsx` into the `Data` directory
 
 
 
