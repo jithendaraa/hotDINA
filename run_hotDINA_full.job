@@ -1,0 +1,8 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH -p LM
+#SBATCH --ntasks-per-node 28
+#SBATCH -t 300:00:00
+set -x
+
+python fit_hotDINA_full_pystan.py -v 130 -o all -w 5000 -i 15000

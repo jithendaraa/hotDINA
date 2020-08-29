@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -N 1
-#SBATCH -p RM
+#SBATCH -p LM
 #SBATCH --ntasks-per-node 28
-#SBATCH -t 5:00:00
+#SBATCH -t 336:00:00
 set -x
 
-python fit_hotDINA_skill_pystan.py -v 130 -o 100
+python fit_hotDINA_skill_pystan.py -v 130 -o all -w 5000 -i 15000
