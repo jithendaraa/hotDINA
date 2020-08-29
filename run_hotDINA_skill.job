@@ -3,6 +3,7 @@
 #SBATCH -p LM
 #SBATCH --ntasks-per-node 28
 #SBATCH -t 336:00:00
+#SBATCH --mem 128GB
 set -x
 
 python fit_hotDINA_skill_pystan.py -v 130 -o all -w 5000 -i 22000
