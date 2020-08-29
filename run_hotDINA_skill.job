@@ -5,4 +5,4 @@
 #SBATCH -t 336:00:00
 set -x
 
-python fit_hotDINA_skill_pystan.py -v 130 -o all -w 5000 -i 15000
+python fit_hotDINA_skill_pystan.py -v 130 -o all -w 5000 -i 22000

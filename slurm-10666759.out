@@ -1,0 +1,34 @@
++ python fit_hotDINA_skill_pystan.py -v 130 -o all -w 5000 -i 15000
+INFO:pystan:COMPILING THE C++ CODE FOR MODEL hotDINA_skill_0169052b413d03a229c34988eca0dc2d NOW.
+compiling stan model..
+/home/jith/anaconda3/lib/python3.8/site-packages/Cython/Compiler/Main.py:369: FutureWarning: Cython directive 'language_level' not set, using 2 for now (Py2). This will change in a later release! File: /local/10666759/tmp/tmpsrqe4yka/stanfit4hotDINA_skill_0169052b413d03a229c34988eca0dc2d_7989186053501504852.pyx
+  tree = Parsing.p_module(s, pxd, full_module_name)
+Stan model took 54.73877191543579 s to compile
+
+Gradient evaluation took 0.32 seconds
+1000 transitions using 10 leapfrog steps per transition would take 3200 seconds.
+Adjust your expectations accordingly!
+
+
+
+Gradient evaluation took 0.32 seconds
+1000 transitions using 10 leapfrog steps per transition would take 3200 seconds.
+Adjust your expectations accordingly!
+
+
+
+Gradient evaluation took 0.4 seconds
+1000 transitions using 10 leapfrog steps per transition would take 4000 seconds.
+Adjust your expectations accordingly!
+
+
+
+Gradient evaluation took 0.38 seconds
+1000 transitions using 10 leapfrog steps per transition would take 3800 seconds.
+Adjust your expectations accordingly!
+
+
+Iteration:     1 / 15000 [  0%]  (Warmup)
+Iteration:     1 / 15000 [  0%]  (Warmup)
+Iteration:     1 / 15000 [  0%]  (Warmup)
+Iteration:     1 / 15000 [  0%]  (Warmup)

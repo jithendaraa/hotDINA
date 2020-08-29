@@ -1,0 +1,5 @@
++ python fit_hotDINA_skill_pystan.py -v 130 -o all -w 5000 -i 22000
+INFO:pystan:COMPILING THE C++ CODE FOR MODEL hotDINA_skill_0169052b413d03a229c34988eca0dc2d NOW.
+compiling stan model..
+/home/jith/anaconda3/lib/python3.8/site-packages/Cython/Compiler/Main.py:369: FutureWarning: Cython directive 'language_level' not set, using 2 for now (Py2). This will change in a later release! File: /local/10666765/tmp/tmpiu7ckaow/stanfit4hotDINA_skill_0169052b413d03a229c34988eca0dc2d_6245546820929827110.pyx
+  tree = Parsing.p_module(s, pxd, full_module_name)
