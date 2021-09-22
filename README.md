@@ -54,8 +54,5 @@ USERNAME = "xxxx" (ssh xxxx@SERVER -p PORT_NUM)
 
 2. `cd scripts && python get_data_for_villages.py -v 114-120 -o 1200`: Extracts transactions data for villages 114 to 120 for the first 1200 attempts. Use `-o all` to get all attempts of a student in a particular village. Output: `pickles/data/data(village_num)_(num_obs).pickle`.
 
-### SCP extracted transactions data to bridges.psc.edu
-
-1. Coming Soon!
 
 
