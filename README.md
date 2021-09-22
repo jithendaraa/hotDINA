@@ -1,6 +1,6 @@
 # hotDINA
 
-Official implementation of the student model implemented in https://rl4ed.org/edm2021/files/spotlights/RL4ED_EDM21_h_11.pdf at EDM Workshop on RL4ED (RL for Education) 2021.
+Official implementation of the student model implemented in <a href="https://rl4ed.org/edm2021/files/spotlights/RL4ED_EDM21_h_11.pdf">Deep Reinforcement Learning to Simulate, Train, and Evaluate Instructional Sequencing Policies</a> published at EDM Workshop on RL4ED (RL for Education) 2021. 
 
 ### Introduction
 Fitting probabilistic student models like hotDINA_skill and hotDINA_full using PyMC3 and PyStan. Note: PyStan is faster for time series models like BKT/hotDINA etc.. This repo:
